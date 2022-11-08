@@ -1,0 +1,66 @@
+﻿@page "/PassengerList/{FlightId}/{PassengerId}/EditDocument"
+<h3>Edit Document</h3>
+
+@inject DocumentService _documentService;
+@inject NavigationManager _navigationManager;
+
+@if(Document == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+<EditForm Model="@Document" OnValidSubmit="@UpdateDocument">
+    <div class="row g-3">
+        <div class="col-auto">
+            <label for="documentName">First and Last name</label>
+            <InputText id="documentName" @bind-Value="@Document.Name" class="form-control"></InputText>
+
+            <label for="documentType">Type of document</label>
+            <select id="documentType" @bind="@Document.documentType" class="form-control">
+              <option value="">Select Document...</option>
+              @foreach(var types in Types)
+              {
+              <option value="@types">@types</option>
+              }
+            </select>
+
+            <label for="documentNumber">Document Number</label>
+            <InputNumber id="documentNumber" @bind-Value="@Document.documentNumber" class="form-control"></InputNumber>
+            <label for="expirationDate">Expirration Date</label>
+            <InputDate id="expirationDate" @bind-Value="@Document.ExpireDate" class="form-control"></InputDate>
+        </div>
+    </div>
+    <br />
+    <button type="submit" class="btn btn-success">
+        <span class="oi oi-pencil"></span>
+        Update
+    </button>
+    <button type="button" class="btn btn-outline-success" @onclick="() => Close() ">Close</button>
+</EditForm>
+}
+
+@code {
+    [Parameter]
+    public string FlightId { get; set; }
+    [Parameter]
+    public string PassengerId{ get; set; }
+    List<string> Types = new List<string>() { "Passport", "ID Card" };
+    public Document Document { get; set; }
+    public NotificationDialog NotificationDialog{ get; set; }
+    public List<ValidationError> ValidationErrors{ get; set; }
+    public String ConcatenatedValidationErrors{ get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+       Document = await _documentService.GetDocumentAsync(int.Parse(PassengerId));
+    }
+    private async Task UpdateDocument()
+    {
+        await _documentService.UpdateDocument(Document);
+        Close();
+    }
+    private void Close()
+    {
+        _navigationManager.NavigateTo($"/PassengerList/{FlightId}");
+    }
+}

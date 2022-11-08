@@ -1,0 +1,73 @@
+﻿@page "/login"
+@inject UserService _userService;
+@inject NavigationManager _navigationManager;
+@inject LoginStatus LoginStatus;
+@inject Blazored.SessionStorage.ISessionStorageService _storage;
+@using Blazored.SessionStorage.StorageOptions
+@using System.Text
+
+<EditForm Model="@User" OnValidSubmit="@LoginAsync">
+<div class="LoginFields">
+ <div class="login-form">
+        <h2 class="text-center">Log in</h2>       
+        <div class="form-group">
+            <InputText id="username" @bind-Value="UserName" required="required" placeholder="Username" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <InputText type="password" id="passwordIn" @bind-Value="UserPassword" required="required" placeholder="Password" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary btn-block" >Log in</button>
+        </div>  
+ </div>
+</div>
+</EditForm>
+
+<NotificationDialog @ref="NotificationDialog" Description="@ConcatenatedValidationErrors"></NotificationDialog>
+@code {
+    [Parameter]
+    public string UserPassword { get; set;  }
+    [Parameter]
+    public string UserName { get; set;  }
+    public User User { get; set; }
+    public User LoginUser { get; set; }
+    private List<User> Users;
+    private NotificationDialog NotificationDialog { get; set; }
+    private List<ValidationError> ValidationErrors { get; set; }
+    public String ConcatenatedValidationErrors{ get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        User = new User();
+    }
+    private async Task  LoginAsync()
+    {
+        LoginUser = await _userService.GetUserAsync(UserName, UserPassword);
+        if(LoginUser != null)
+        {
+            await _storage.SetItemAsync<User>("SessionUser", LoginUser);
+            _navigationManager.NavigateTo("/Welcome");
+            LoginStatus.Role = LoginUser.UserRole;
+        }
+          else
+          {
+              ConcatenatedValidationErrors = "Wrong input fields";
+              NotificationDialog.Show();
+          }
+
+    }
+
+    private string GetConcatenatedValidationErrors(List<ValidationError> ValidationErrors)
+    {
+        StringBuilder message = new StringBuilder();
+        foreach(var error in ValidationErrors)
+        {
+            if (message.Length == 0)
+                message.Append(error.Description);
+            else
+                message.Append($"{Environment.NewLine} {error.Description}");
+
+        }
+        return message.ToString();
+    }
+}

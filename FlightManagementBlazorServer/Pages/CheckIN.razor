@@ -1,0 +1,122 @@
+﻿@page "/PassengerList/{FlightId}/{PassengerId}/Checkin"
+@inject PassengerService _passengerService;
+@using System.Text;
+@inject DocumentService _documentService;
+@inject NavigationManager _navigationManager;
+<h3>Check In</h3>
+
+@if(Document == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+<EditForm Model="@Document" OnValidSubmit="@CheckPassenger">
+    <div class="row g-3">
+        <div class="col-auto">
+            <label for="passengerSeat">Seat Number</label>
+            <InputText id="passengerSeat" @bind-Value="@Passenger.SeatNumber" placeholder="Enter seat number" class="form-control"></InputText>
+            <label for="documentName">First and Last name</label>
+            <InputText id="documentName" @bind-Value="@Document.Name" class="form-control"></InputText>
+
+            <label for="documentType">Type of document</label>
+            <select id="documentType" @bind="@Document.documentType" class="form-control">
+              <option value="">Select Document...</option>
+              @foreach(var types in Types)
+              {
+              <option value="@types">@types</option>
+              }
+            </select>
+
+            <label for="documentNumber">Document Number</label>
+            <InputNumber id="documentNumber" @bind-Value="@Document.documentNumber" class="form-control"></InputNumber>
+            <label for="expirationDate">Expirration Date</label>
+            <InputDate id="expirationDate" @bind-Value="@Document.ExpireDate" class="form-control"></InputDate>
+        </div>
+    </div>
+    <br />
+    <button type="submit" class="btn btn-success">
+        <span class="oi oi-pencil"></span>
+        Add Document
+    </button>
+    <button type="button" class="btn btn-outline-success" @onclick="() => Close() ">Close</button>
+</EditForm>
+}
+
+<NotificationDialog @ref="NotificationDialog" Description="@ConcatenatedValidationErrors"></NotificationDialog>
+@code {
+    [Parameter]
+    public string FlightId { get; set; }
+    [Parameter]
+    public string PassengerId{ get; set; }
+    List<string> Types = new List<string>() { "Passport", "ID Card" };
+    public Passenger Passenger { get; set; }
+    public Document Document { get; set; }
+    public NotificationDialog NotificationDialog{ get; set; }
+    public List<ValidationError> ValidationErrors{ get; set; }
+    public String ConcatenatedValidationErrors{ get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Passenger = await _passengerService.GetPassengerAsync(int.Parse(PassengerId));
+        Document = new Document();
+        Document.ExpireDate = DateTime.Now;
+    }
+
+    private async Task CheckPassenger()
+    {
+        ValidationErrors = ValidateFlight();
+        if (ValidationErrors.Any())
+        {
+            ConcatenatedValidationErrors = GetConcatenatedValidationErrors(ValidationErrors);
+            NotificationDialog.Show();
+        }
+        else
+        {
+            Document.PassengerId = int.Parse(PassengerId);
+            await _passengerService.CheckPassenger(Passenger);
+            _documentService.AddDocumentAsync(Document);
+            Close();
+        }
+    }
+
+    private void Close()
+    {
+        _navigationManager.NavigateTo($"/PassengerList/{FlightId}");
+    }
+
+    private List<ValidationError> ValidateFlight()
+    {
+        var validationErrors = new List<ValidationError>();
+        if (String.IsNullOrWhiteSpace(Passenger.SeatNumber))
+            validationErrors.Add(new ValidationError { Description = "Please insert Seat Number!" });
+
+        if (String.IsNullOrWhiteSpace(Document.Name))
+            validationErrors.Add(new ValidationError { Description = "Please insert Name!" });
+
+        if (String.IsNullOrWhiteSpace(Document.documentType))
+            validationErrors.Add(new ValidationError { Description = "Please select Document Type!" });
+
+        if ((Document.documentNumber == 0))
+            validationErrors.Add(new ValidationError { Description = "Please enter Document Number!" });
+
+        if (DateTime.Now >= Document.ExpireDate)
+            validationErrors.Add(new ValidationError { Description = "This document has expired!" });
+
+        return validationErrors;
+
+    }
+
+    private string GetConcatenatedValidationErrors(List<ValidationError> ValidationErrors)
+    {
+        StringBuilder message = new StringBuilder();
+        foreach(var error in ValidationErrors)
+        {
+            if (message.Length == 0)
+                message.Append(error.Description);
+            else
+                message.Append($"{Environment.NewLine} {error.Description}");
+
+        }
+        return message.ToString();
+    }
+}

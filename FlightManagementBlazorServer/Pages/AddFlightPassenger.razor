@@ -1,0 +1,83 @@
+﻿@page "/PassengerList/{FlightId}/AddPassenger"
+@using System.Text;
+@inject PassengerService _passengerService;
+@inject NavigationManager _navigationManager;
+<h3>Add Passenger</h3>
+
+<EditForm Model="@Passenger" OnValidSubmit="@AddPassengerAsync">
+    <PassengerFields Passenger="@Passenger"></PassengerFields>
+    <button type="submit" class="btn btn-success">
+        <span class="oi oi-pencil"></span>
+        Add Passenger
+    </button>
+    <button type="button" class="btn btn-outline-success" @onclick="() => Close() ">Close</button>
+</EditForm>
+
+<NotificationDialog @ref="NotificationDialog" Description="@ConcatenatedValidationErrors"></NotificationDialog>
+@code {
+    public PassengerList PassengerList;
+    [Parameter]
+    public string FlightId { get; set; }
+    public Passenger Passenger { get; set; }
+    public NotificationDialog NotificationDialog{ get; set; }
+    public List<ValidationError> ValidationErrors{ get; set; }
+    public String ConcatenatedValidationErrors{ get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Passenger = new Passenger();
+    }
+
+    private async Task AddPassengerAsync()
+    {
+        ValidationErrors = ValidateFlight();
+        if (ValidationErrors.Any())
+        {
+            ConcatenatedValidationErrors = GetConcatenatedValidationErrors(ValidationErrors);
+            NotificationDialog.Show();
+        }
+        else
+        {
+            Passenger.FlightId = int.Parse(FlightId);
+            await _passengerService.AddPassengerAsync(Passenger);
+            Close();
+        }
+    }
+
+    private void Close()
+    {
+        _navigationManager.NavigateTo($"/PassengerList/{FlightId}");
+    }
+
+    private List<ValidationError> ValidateFlight()
+    {
+        var validationErrors = new List<ValidationError>();
+        if (String.IsNullOrWhiteSpace(Passenger.Name))
+            validationErrors.Add(new ValidationError { Description = "Please insert Name!" });
+
+        if (String.IsNullOrWhiteSpace(Passenger.LastName))
+            validationErrors.Add(new ValidationError { Description = "Please insert Last Name!" });
+
+        if (Passenger.Gender == null)
+            validationErrors.Add(new ValidationError { Description = "Please select Gender!" });
+
+        if ((Passenger.NumberLuggage > 0) && (Passenger.LuggageWeight == 0))
+            validationErrors.Add(new ValidationError { Description = "Check luggage information!" });
+
+        return validationErrors;
+
+    }
+
+    private string GetConcatenatedValidationErrors(List<ValidationError> ValidationErrors)
+    {
+        StringBuilder message = new StringBuilder();
+        foreach(var error in ValidationErrors)
+        {
+            if (message.Length == 0)
+                message.Append(error.Description);
+            else
+                message.Append($"{Environment.NewLine} {error.Description}");
+
+        }
+        return message.ToString();
+    }
+}

@@ -1,0 +1,65 @@
+﻿@page "/PassengerList/{FlightId}/{PassengerId}/Info"
+@inject PassengerService _passengerService;
+@inject DocumentService _documentService;
+@inject NavigationManager _navigationManager;
+
+
+<h3>Info</h3>
+
+@if(Document == null)
+{
+    <div>@Message</div>
+}
+else
+{
+    <table class="table table-responsive">
+      <tr>
+        <th>Name</th>
+        <td>@Document.Name</td>
+      </tr>
+      <tr>
+        <th>Seat</th>
+        <td>@Passenger.SeatNumber</td>
+      </tr>
+      <tr>
+         <th>Luggage</th>
+         <td>@Passenger.NumberLuggage bags (@Passenger.LuggageWeight kg)</td>
+     </tr>
+     <tr>
+         <th>Document Type</th>
+         <td>@Document.documentType</td>
+    </tr>
+     <tr>
+         <th>Document Exp.Date</th>
+         <td>@Document.ExpireDate</td>
+    </tr>
+    </table>
+}
+<button type="button" class="btn btn-outline-success" @onclick="() => Close() ">Close</button>
+@code {
+   
+    [Parameter]
+    public string FlightId { get; set; }
+    [Parameter]
+    public string PassengerId{ get; set; }
+    List<string> Types = new List<string>() { "Passport", "ID Card" };
+    public Document Document { get; set; }
+    public Passenger Passenger { get; set; }
+    public NotificationDialog NotificationDialog{ get; set; }
+    public List<ValidationError> ValidationErrors{ get; set; }
+    public String ConcatenatedValidationErrors{ get; set; }
+    public string Message = "The user has not been checked yet!";
+    protected override async Task OnInitializedAsync()
+    {
+        Passenger = await _passengerService.GetPassengerAsync(int.Parse(PassengerId));
+        Document = await _documentService.GetDocumentAsync(int.Parse(PassengerId));
+    }
+    private async Task UpdateDocument()
+    {
+        Close();
+    }
+    private void Close()
+    {
+        _navigationManager.NavigateTo($"/PassengerList/{FlightId}");
+    }
+}

@@ -1,0 +1,10 @@
+﻿@page "/CHECKINPage"
+<h3>CheckInPage</h3>
+
+@code {
+    public User User { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        User = new User();
+    }
+}

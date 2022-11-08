@@ -1,0 +1,30 @@
+﻿@inject UserService _userService;
+
+<div class="userFields">
+    <label for="userRole">User Role</label>
+    <select id="userRole" @bind="@User.UserRole" class="form-control">
+        <option value="">Select...</option>
+        @foreach(var roles in Roles)
+        {
+        <option value="@roles">@roles</option>
+        }
+    </select>
+    <label for="userName">Username</label>
+    <InputText id="userName" @bind-Value="@User.Name" class="form-control"></InputText>
+
+    <label for="userEmail">Email</label>
+    <InputText id="userEmail" @bind-Value="@User.Email" class="form-control"></InputText>
+
+    <label for="userPassword">Password</label>
+    <InputText id="userPassword" @bind-Value="@User.Password" class="form-control"></InputText>
+    <br>
+</div> 
+}
+
+@code {
+
+    [Parameter]
+    public User User { get; set; }
+    List<string> Roles = new List<string>() { "ADMIN", "CHECKIN" };
+
+}

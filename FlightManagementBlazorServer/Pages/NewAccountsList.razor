@@ -1,0 +1,62 @@
+﻿@page "/AdminPage"
+@inject UserService _userService;
+@inject NavigationManager _navigationManager;
+<h3>New registrations</h3>
+
+<button type="button" class="btn btn-success" @onclick="OpenAddUserPage">
+                              <span class="oi oi-plus"></span>
+                                 Add User
+                        </button>
+@if(Accounts == null)
+{
+    <div>Loading...</div>
+}
+else
+{
+
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>UserRole</th>
+                <th>Username</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var accounts in Accounts)
+            {
+                    <tr>
+                    <td>@accounts.UserRole</td>
+                    <td>@accounts.Name</td>
+                    <td>@accounts.Email</td>
+                    <td>
+                        <button type="button" class="btn btn-danger" @onclick="() => DeleteAccount(accounts.UserId)">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                    </td>
+                </tr>
+                
+            }
+            
+        </tbody>
+    </table>
+
+}
+@code {
+    private List<User> Accounts;
+     public int SelectedAccount{ get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Accounts = await _userService.GetUsers();
+    }
+    private async Task DeleteAccount(int userId)
+    {
+        SelectedAccount = userId;
+        await _userService.DeleteUser(SelectedAccount);
+        Accounts = await _userService.GetUsers();
+    }
+    private void OpenAddUserPage()
+    {
+        _navigationManager.NavigateTo("/AddUser");
+    }
+}

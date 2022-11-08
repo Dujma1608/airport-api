@@ -1,0 +1,38 @@
+﻿@inject PassengerService _passengerService;
+
+
+<div class="passengerFields">
+    <label for="passengerName">First name</label>
+    <InputText id="passengerName" @bind-Value="@Passenger.Name" class="form-control"></InputText>
+
+    <label for="passengerLastName">Last name</label>
+    <InputText id="passengerLastName" @bind-Value="@Passenger.LastName" class="form-control"></InputText>
+
+    <label for="passengerGender">Gender</label>
+    <select id="passengerGender" @bind="@Passenger.Gender" class="form-control">
+        <option value="">Select...</option>
+        @foreach(var genders in Genders)
+        {
+        <option value="@genders">@genders</option>
+        }
+    </select>
+    <label for="numberOfLuggage">Pieces of luggage</label>
+    <select id="numberOfLuggage" @bind="@Passenger.NumberLuggage" class="form-control">
+        <option value="">0</option>
+        @foreach(var number in NumberOfLugggages)
+        {
+        <option value="@number">@number</option>
+        }
+    </select>
+    <label for="luggageWeight">Luggage weight (kg)</label>
+    <InputNumber id="luggageWweight" @bind-Value="@Passenger.LuggageWeight" class="form-control"></InputNumber>
+    <br>
+</div> 
+    @code {
+
+    [Parameter]
+    public Passenger Passenger { get; set; }
+    List<string> Genders = new List<string>() { "Male", "Female" };
+    List<int> NumberOfLugggages = new List<int>() { 1, 2, 3 , 4, 5, 6};
+
+}

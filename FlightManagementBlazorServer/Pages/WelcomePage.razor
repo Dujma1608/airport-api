@@ -1,0 +1,43 @@
+﻿@page "/Welcome"
+@inject Blazored.SessionStorage.ISessionStorageService _storage;
+@inject UserService _userService;
+
+<h3>Welcome @Name</h3>
+
+
+@if(User == null)
+{
+    <div>Loading...</div>
+}
+else
+{
+    <table class="table table-responsive">
+      <tr>
+        <th>Name</th>
+        <td>@User.Name</td>
+      </tr>
+      <tr>
+        <th>Password</th>
+        <td>@User.Password</td>
+      </tr>
+      <tr>
+         <th>Email</th>
+         <td>@User.Email</td>
+     </tr>
+     <tr>
+         <th>User Role</th>
+         <td>@User.UserRole</td>
+    </tr>
+    </table>
+}
+
+@code {
+    public User User { get; set; }
+    [Parameter]
+    public string Name { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        User = await _storage.GetItemAsync<User>("SessionUser");
+        Name = User.Name;
+    }
+}

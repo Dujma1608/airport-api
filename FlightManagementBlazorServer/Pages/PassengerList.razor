@@ -1,0 +1,143 @@
+﻿@page "/PassengerList/{FlightId}"
+@inject DocumentService _documentService;
+@inject PassengerService _passengerService;
+@inject NavigationManager _navigationManager;
+@inject LoginStatus LoginStatus;
+@implements IDisposable;
+
+<h3>AddPassenger</h3>
+
+@if(Passengers == null)
+{
+    <div>Loading...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Gender</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var passenger in Passengers)
+            {
+
+                <tr>
+                    <td>@passenger.Name</td>
+                    <td>@passenger.LastName</td>
+                    <td>@passenger.Gender</td>
+                    <td>  
+                        @if (LoginStatus.Role == "ADMIN")
+                        {
+                        <button type="button" class="btn btn-primary" @onclick="() => EditPassenger(passenger.Id)">
+                            <span class="oi oi-pencil"></span>
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="() => DeletePassenger(passenger.Id)">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                        @if (passenger.SeatNumber != null)
+                        {
+                            <button type="button" class="btn btn-info m-1"  @onclick="() => Info(passenger.Id)">Info</button>
+                        }
+                        else {<button type="button" class="btn btn-info m-1"  @onclick="() => InfoNull()">Info</button>}
+
+                        @if (passenger.SeatNumber != null)
+                        {
+                         <button type="button" class="btn btn-light" @onclick="() => EditDocument(passenger.Id)">Edit Document</button>
+                          <text>@passenger.SeatNumber</text>
+                          <span class="oi oi-flag"></span>
+                        }
+                        }
+                       
+                        <button type="button" class="btn btn-link" @onclick="() => CheckInPassenger(passenger.Id)">Check in</button>
+                       
+                    </td>
+                </tr>
+            }
+            
+        </tbody>
+    </table>
+}
+@if (LoginStatus.Role == "ADMIN")
+  {
+<button type="button" class="btn btn-success" @onclick="OpenAddPassengerPage">
+    <span class="oi oi-plus"></span>
+    Add Passenger
+</button>
+  }
+
+<button type="button" class="btn btn-secondary" @onclick="Close">
+    <span class="oi oi-x"</span>Close</button>
+
+<ConfirmationDialog @ref="DeleteConfirmationDialog" ConfirmationChanged="@OnDeleteConfirmationSelected" Question="Delete passenger?"></ConfirmationDialog>
+<NotificationDialog @ref="NotificationDialog" Description="User has not been checked yet!"></NotificationDialog>
+@code {
+
+    [Parameter]
+    public string FlightId { get; set; }
+    public ConfirmationDialog DeleteConfirmationDialog{ get; set; }
+    public NotificationDialog NotificationDialog { get; set; }
+    private List<Passenger> Passengers;
+    public int SelectedPassengerId{ get; set; }
+    public Document Document { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Passengers = await _passengerService.GetPassengers(int.Parse(FlightId));
+    }
+
+    private void OpenAddPassengerPage()
+    {
+        _navigationManager.NavigateTo($"/PassengerList/{FlightId}/AddPassenger");
+    }
+
+    private void EditPassenger(int passengerId)
+    {
+        _navigationManager.NavigateTo($"/PassengerList/{FlightId}/{passengerId}");
+    }
+    private async Task Info(int passengerId)
+    {
+        _navigationManager.NavigateTo($"/PassengerList/{FlightId}/{passengerId}/Info");
+    }
+    private async Task InfoNull()
+    {
+        NotificationDialog.Show();
+    }
+    private async Task DeletePassenger(int passengerId)
+    {
+        SelectedPassengerId = passengerId;
+        DeleteConfirmationDialog.Show();
+    }
+     private async Task OnDeleteConfirmationSelected(bool isDeleteConfirmed)
+    {
+        if(isDeleteConfirmed)
+        {
+            await _passengerService.DeletePassenger(SelectedPassengerId);
+            Passengers = await _passengerService.GetPassengers(int.Parse(FlightId));
+        }
+    }
+
+    private void Close()
+    {
+        _navigationManager.NavigateTo("/");
+    }
+    private void CheckInPassenger(int passengerId)
+    {
+        _navigationManager.NavigateTo($"/PassengerList/{FlightId}/{passengerId}/Checkin");
+    }
+    private void EditDocument(int passengerId)
+    {
+         _navigationManager.NavigateTo($"/PassengerList/{FlightId}/{passengerId}/EditDocument");
+    }
+    protected override void OnInitialized()
+    {
+        LoginStatus.OnChange += StateHasChanged;
+    }
+    public void Dispose()
+    {
+        LoginStatus.OnChange -= StateHasChanged;
+    }
+}
